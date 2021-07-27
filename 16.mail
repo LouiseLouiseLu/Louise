@@ -1,0 +1,53 @@
+import smtplib                          # smtplib 用于邮件的发信动作
+from email.mime.text import MIMEText    # email 用于构建邮件内容
+from email.header import Header         # 用于构建邮件头
+import csv                              #引用csv模块。用于群发邮件的收件人管理。
+
+
+from_addr = '378024265@qq.com'                  #发信方信息：发信人邮箱
+password = input('请输入你的授权码数字')          #发信方信息：QQ邮箱授权码
+to_addr = 'luyc11@mail.king-long.com.cn'        # 收信方邮箱
+smtp_server = 'smtp.qq.com'                     #发信人服务器
+
+
+# 邮箱正文内容
+text='''这是来自python的邮件。
+来自Louise。
+'''
+
+
+# 待写入csv文件的收件人数据：人名+邮箱
+data = [['Louise-QQ', '378024265@qq.com'],['Louise-Kinglong', 'luyc11@mail.king-long.com.cn']]
+
+# 写入收件人数据
+with open('to_addrs.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    for row in data:
+        writer.writerow(row)
+
+
+# 读取收件人数据，并启动写信和发信流程
+with open('to_addrs.csv', 'r') as f:
+    reader = csv.reader(f)
+    for row in reader: 
+        to_addrs=row[1]
+        msg = MIMEText(text,'plain','utf-8')    #第一个参数为正文内容，第二个参数为格式(plain 为纯文本)，第三个参数为编码
+        
+        # 邮件头信息
+        msg['From'] = Header(from_addr)
+        msg['To'] = Header(to_addrs)
+        msg['Subject'] = Header('python test')
+
+        # 开启发信服务，这里使用的是加密传输
+        #server = smtplib.SMTP_SSL()             #如果端口是用SSL加密，就这样写代码。其中server是变量名。不是SSL加密就写成：server = smtplib.SMTP()
+        server = smtplib.SMTP_SSL(smtp_server)
+        #server.starttls()                       #如果发件邮箱是企业邮箱，要加这句。
+        server.connect(smtp_server,25)           #如果出现编码错误UnicodeDecodeError，可以这样写：server.connect('smtp.qq.com', 465,'utf-8')。默认端口25。
+        server.login(from_addr, password)           #登录发信邮箱
+        try:
+            server.sendmail(from_addr, to_addrs, msg.as_string())
+            print('发送成功')
+        except:
+            print('发送失败，请重试')
+
+server.quit()           # 关闭服务器
